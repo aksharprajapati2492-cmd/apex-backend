@@ -17,6 +17,12 @@ app.use(helmet());
 app.use(cors());
 app.use(express.json());
 
+// Serve static frontend (index.html) and assets
+app.use(express.static(path.join(__dirname)));
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
 // Rate Limiting
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
