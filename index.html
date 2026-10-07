@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apex Trading Suite & Cloud Journal</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen">
+
+    <!-- LOGIN OVERLAY -->
+    <div id="loginModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+        <div class="bg-slate-900 border border-slate-800 p-8 rounded-2xl w-full max-w-md shadow-2xl">
+            <h2 class="text-2xl font-bold text-cyan-400 mb-2">Apex Terminal Login</h2>
+            <p class="text-xs text-slate-400 mb-6">Secured with rate limiting & JWT authentication</p>
+            <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs uppercase tracking-wider text-slate-400 mb-1">Username</label>
+                    <input type="text" id="loginUser" value="ax4r" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-cyan-500">
+                </div>
+                <div>
+                    <label class="block text-xs uppercase tracking-wider text-slate-400 mb-1">Password</label>
+                    <input type="password" id="loginPass" value="ax4r" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-cyan-500">
+                </div>
+                <div id="loginError" class="text-rose-400 text-xs hidden"></div>
+                <button type="submit" class="w-full bg-cyan-600 hover:bg-cyan-500 font-semibold py-3 rounded-xl transition duration-200 text-white">Secure Login</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MAIN APP CONTAINER -->
+    <div id="appContainer" class="hidden max-w-7xl mx-auto px-4 py-8">
+        <header class="flex justify-between items-center mb-8 border-b border-slate-800 pb-4">
+            <div>
+                <h1 class="text-3xl font-extrabold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">Apex Trading Suite</h1>
+                <p class="text-xs text-slate-400">Cloud-Synced Options Journal & Growth Calculator</p>
+            </div>
+            <div class="flex items-center gap-4">
+                <span id="welcomeUser" class="text-xs text-cyan-400 font-mono bg-cyan-950/50 border border-cyan-800 px-3 py-1.5 rounded-lg"></span>
+                <button onclick="logout()" class="bg-rose-950/50 hover:bg-rose-900 border border-rose-800 text-rose-300 px-4 py-2 rounded-xl text-xs font-semibold transition">Logout</button>
+            </div>
+        </header>
+
+        <!-- TRADE JOURNAL SECTION -->
+        <section class="bg-slate-900/50 border border-slate-800 rounded-2xl p-6 mb-8">
+            <h2 class="text-xl font-bold text-white mb-4">Cloud Trade Journal</h2>
+            <form id="tradeForm" onsubmit="addTrade(event)" class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">Instrument</label>
+                    <select id="tSymbol" onchange="updateLotSize()" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white">
+                        <option value="NIFTY">NIFTY (Lot: 65)</option>
+                        <option value="BANKNIFTY">BANKNIFTY (Lot: 30)</option>
+                        <option value="SENSEX">SENSEX (Lot: 20)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">Strike Price</label>
+                    <input type="number" id="tStrike" placeholder="e.g. 24500" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">Type</label>
+                    <select id="tType" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white">
+                        <option value="CE">CE (Call)</option>
+                        <option value="PE">PE (Put)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">Lots</label>
+                    <input type="number" id="tLots" value="1" min="1" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">Entry Price</label>
+                    <input type="number" step="0.05" id="tEntry" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">Exit Price</label>
+                    <input type="number" step="0.05" id="tExit" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">Commission (₹)</label>
+                    <select id="tCommission" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white">
+                        <option value="50">50</option>
+                        <option value="60">60</option>
+                        <option value="70">70</option>
+                        <option value="80">80</option>
+                        <option value="90">90</option>
+                        <option value="100">100</option>
+                    </select>
+                </div>
+                <div class="flex items-end">
+                    <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 font-semibold py-2.5 rounded-xl transition text-white">Save Trade to Cloud</button>
+                </div>
+            </form>
+
+            <!-- Trades Table -->
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-slate-950 text-slate-400 border-b border-slate-800">
+                        <tr>
+                            <th class="p-3">Instrument</th>
+                            <th class="p-3">Strike / Type</th>
+                            <th class="p-3">Lots (Qty)</th>
+                            <th class="p-3">Entry</th>
+                            <th class="p-3">Exit</th>
+                            <th class="p-3">Capital Used</th>
+                            <th class="p-3">Net P&L</th>
+                            <th class="p-3">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tradesTableBody" class="divide-y divide-slate-800/50"></tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3000/api'; // Change to your deployed backend URL (e.g. Render/Railway)
+        let token = localStorage.getItem('apex_token');
+        const lotSizes = { NIFTY: 65, BANKNIFTY: 30, SENSEX: 20 };
+
+        if (token) {
+            document.getElementById('loginModal').classList.add('hidden');
+            document.getElementById('appContainer').classList.remove('hidden');
+            fetchTrades();
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const username = document.getElementById('loginUser').value;
+            const password = document.getElementById('loginPass').value;
+            const errDiv = document.getElementById('loginError');
+
+            try {
+                const res = await fetch(`${API_URL}/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Login failed');
+
+                localStorage.setItem('apex_token', data.token);
+                token = data.token;
+                document.getElementById('loginModal').classList.add('hidden');
+                document.getElementById('appContainer').classList.remove('hidden');
+                document.getElementById('welcomeUser').innerText = `User: ${data.username}`;
+                fetchTrades();
+            } catch (err) {
+                errDiv.innerText = err.message;
+                errDiv.classList.remove('hidden');
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('apex_token');
+            location.reload();
+        }
+
+        async function fetchTrades() {
+            try {
+                const res = await fetch(`${API_URL}/trades`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!res.ok) throw new Error('Unauthorized');
+                const trades = await res.json();
+                renderTrades(trades);
+            } catch (err) {
+                logout();
+            }
+        }
+
+        async function addTrade(e) {
+            e.preventDefault();
+            const symbol = document.getElementById('tSymbol').value;
+            const strike = document.getElementById('tStrike').value;
+            const type = document.getElementById('tType').value;
+            const lots = parseInt(document.getElementById('tLots').value);
+            const entryPrice = parseFloat(document.getElementById('tEntry').value);
+            const exitPrice = parseFloat(document.getElementById('tExit').value);
+            const commission = parseFloat(document.getElementById('tCommission').value);
+
+            const lotSize = lotSizes[symbol];
+            const totalQty = lots * lotSize;
+            const capitalUsed = entryPrice * totalQty;
+            const grossPnl = (exitPrice - entryPrice) * totalQty;
+            const netPnl = grossPnl - commission;
+
+            const tradeData = {
+                date: new Date().toISOString().split('T')[0],
+                symbol, strike, type, lotSize, lots, entryPrice, exitPrice, commission, netPnl, capitalUsed, notes: ''
+            };
+
+            const res = await fetch(`${API_URL}/trades`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify(tradeData)
+            });
+
+            if (res.ok) {
+                document.getElementById('tradeForm').reset();
+                fetchTrades();
+            }
+        }
+
+        async function deleteTrade(id) {
+            await fetch(`${API_URL}/trades/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            fetchTrades();
+        }
+
+        function renderTrades(trades) {
+            const tbody = document.getElementById('tradesTableBody');
+            tbody.innerHTML = trades.map(t => `
+                <tr class="hover:bg-slate-900/50">
+                    <td class="p-3 font-semibold">${t.symbol}</td>
+                    <td class="p-3">${t.strike} <span class="text-cyan-400 font-bold">${t.type}</span></td>
+                    <td class="p-3">${t.lots} (${t.lots * t.lotSize})</td>
+                    <td class="p-3">₹${t.entryPrice.toFixed(2)}</td>
+                    <td class="p-3">₹${t.exitPrice.toFixed(2)}</td>
+                    <td class="p-3">₹${t.capitalUsed.toFixed(2)}</td>
+                    <td class="p-3 font-bold ${t.netPnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">₹${t.netPnl.toFixed(2)}</td>
+                    <td class="p-3"><button onclick="deleteTrade(${t.id})" class="text-rose-400 hover:text-rose-300">Delete</button></td>
+                </tr>
+            `).join('');
+        }
+    </script>
+</body>
+</html>
