@@ -115,7 +115,7 @@
     </div>
 
     <script>
-        const API_URL = 'http://localhost:3000/api'; // Change to your deployed backend URL (e.g. Render/Railway)
+        const API_URL = '/api'; // use relative API path so deployed site calls the same host
         let token = localStorage.getItem('apex_token');
         const lotSizes = { NIFTY: 65, BANKNIFTY: 30, SENSEX: 20 };
 
