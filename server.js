@@ -3,11 +3,6 @@ const cors = require('cors');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const rateLimit = require('express-rate-limit');
-const express = require('express');
-const cors = require('cors');
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
 const fs = require('fs');
 const path = require('path');
@@ -110,3 +105,5 @@ app.delete('/api/trades/:id', authenticateToken, (req, res) => {
 app.listen(PORT, () => {
     console.log(`Secure Trading Backend running on port ${PORT}`);
 });
+
+
