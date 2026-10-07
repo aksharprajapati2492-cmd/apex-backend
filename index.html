@@ -13,7 +13,7 @@
     <div id="loginModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
         <div class="bg-slate-900 border border-slate-800 p-8 rounded-2xl w-full max-w-md shadow-2xl">
             <h2 class="text-2xl font-bold text-cyan-400 mb-2">Apex Terminal Login</h2>
-            <p class="text-xs text-slate-400 mb-6">Secured with rate limiting & JWT authentication</p>
+            <p class="text-xs text-slate-400 mb-6">Secureed with rate limiting & JWT authentication</p>
             <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
                 <div>
                     <label class="block text-xs uppercase tracking-wider text-slate-400 mb-1">Username</label>
@@ -120,10 +120,9 @@
         const lotSizes = { NIFTY: 65, BANKNIFTY: 30, SENSEX: 20 };
 
         if (token) {
-            document.getElementById('loginModal').classList.add('hidden');
-            document.getElementById('appContainer').classList.remove('hidden');
-            fetchTrades();
-        }
+                // Redirect to full app UI if token exists
+                window.location.href = '/app.html';
+            }
 
         async function handleLogin(e) {
             e.preventDefault();
@@ -142,10 +141,8 @@
 
                 localStorage.setItem('apex_token', data.token);
                 token = data.token;
-                document.getElementById('loginModal').classList.add('hidden');
-                document.getElementById('appContainer').classList.remove('hidden');
-                document.getElementById('welcomeUser').innerText = `User: ${data.username}`;
-                fetchTrades();
+                // Redirect to full app UI
+                window.location.href = '/app.html';
             } catch (err) {
                 errDiv.innerText = err.message;
                 errDiv.classList.remove('hidden');
